@@ -1,0 +1,13 @@
+.home {
+    text-align: center;
+    margin-top: 100px;
+}
+
+.box {
+    width: 85vw !important;
+    box-shadow: rgba(185, 172, 172, 0.12) 0px 2px 12px;
+    max-height: 70vh;
+    border-radius: 8px;
+    /* background-color: rgb(242, 233, 233); */
+    /* overflow-y: scroll; */
+}
