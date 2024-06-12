@@ -4,7 +4,7 @@ const { promises: fs } = require("node:fs");
 import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 
-const removeFile = (name,type) => {
+const removeFile = (name, type) => {
   unlink(path.join(__dirname, `../../public/${type}/${name}`), (err) => {
     if (err) throw err;
   });
@@ -41,7 +41,7 @@ const createPDF = async (texts, file) => {
       page.drawText(t.text, {
         x: t.baseline.x0,
         y: height - t.baseline.y0,
-        size: 12,
+        size: 13,
         font: customFont,
         color: rgb(0, 0, 0),
         opacity: 0,
@@ -55,4 +55,14 @@ const createPDF = async (texts, file) => {
   return new Blob([searchablePdfBytes], { type: 'application/pdf' });
 }
 
-module.exports = { removeFile, convertPDFtoImage, createPDF }
+const savePDF = async (buffer, file) => {
+  const filePath = path.join(__dirname, `../../public/ocr_files/${file}`)
+  await fs.writeFile(filePath, buffer)
+  return filePath;
+};
+
+const readPDF = async (filePath) => {
+  return await fs.readFile(filePath);
+}
+
+module.exports = { removeFile, convertPDFtoImage, createPDF, savePDF,readPDF }
