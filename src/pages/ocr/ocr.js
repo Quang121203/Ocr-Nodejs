@@ -4,10 +4,13 @@ import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/Button';
 import { useState } from 'react';
 import axios from '../../config/axios';
+import convertPdfToImages from '../../services/fileServices';
+import CropperImage from '../../components/Cropper/cropper';
 
 const Ocr = () => {
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [src, setSrc] = useState(null);
 
   const onChangeFile = (e) => {
     const _file = e.target.files[0];
@@ -24,6 +27,9 @@ const Ocr = () => {
     }
 
   }
+
+
+
 
   const onClickOCR = async (e) => {
     if (!file) {
@@ -48,8 +54,18 @@ const Ocr = () => {
   }
 
 
+  const onClickOCR2 = async (e) => {
+    if (!file) {
+      alert("Please import file")
+      return;
+    }
+    const image = await convertPdfToImages(file);
+    setSrc(image);
+  }
+
+
   return (
-    <div className='container d-flex justify-content-center align-items-center flex-column ocr'>
+    <div className='container d-flex my-4 align-items-center flex-column ocr'>
       <InputGroup className="mb-3">
         <Form.Control
           placeholder="File"
@@ -60,13 +76,22 @@ const Ocr = () => {
 
       {file ? (
         !isLoading ? (
-          <Button variant="primary col-6" onClick={() => onClickOCR()}>OCR</Button>
+          <div className='d-flex '>
+            <Button variant="primary col-6" onClick={() => onClickOCR()}>OCR</Button>
+            <Button variant="primary col-6 mx-2" onClick={() => onClickOCR2()}>OCR2</Button>
+          </div>
+
         ) : (
           <Button variant="secondary col-6">Loading......</Button>
         )
       ) : (
         <Button variant="secondary col-6" onClick={() => alert("Please import file")}>OCR</Button>
       )}
+
+      {src && file&&
+        <CropperImage src={src} file={file}/>
+      }
+
     </div >
 
   );

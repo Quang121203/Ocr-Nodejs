@@ -12,6 +12,7 @@ function App() {
     <>
       <BrowserRouter>
         <Routes>
+          {/* <Route path="/admin" element={<Ocr />} /> */}
           <Route path="/admin" element={<PrivateRoute><Ocr /></PrivateRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<Home />} />
