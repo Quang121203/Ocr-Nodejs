@@ -9,6 +9,7 @@ const bodyParser = require('body-parser')
 // const numCPUs = os.cpus().length;
 // console.log(`Number of CPU cores: ${numCPUs}`);
 
+
 //config enviroment variables =================================
 require('dotenv').config()
 const port = process.env.PORT

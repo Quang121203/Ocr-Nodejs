@@ -4,23 +4,48 @@ const { Worker } = require('worker_threads');
 const os = require('os');
 
 const handleText = (text) => {
-    let line1 = text[0].split("   ");
-    let name = (line1[0].replace(/[^A-Za-zÀ-ỹ\s]/g, '')).trim();
+    let name = "";
+    if (text[0]) {
+        let line1 = text[0].split("   ");
+        name = (line1[0].replace(/[^A-Za-zÀ-ỹ\s]/g, '')).trim();
+    }
 
-    let line2 = text[1].split("   ");
-    let number = (line2[0].slice(2).replace(/[^A-Za-zÀ-ỹ\s\d\/\-]/g, '')).trim();
+    let number = "";
+    let adress = "";
+    let date = [];
 
-    let adress_date = line2[line2.length - 1];
-    let postionAdress = adress_date.search("ngày");
-    let adress = (adress_date.slice(0, postionAdress)).replace(/[^A-Za-zÀ-ỹ\s]/g, '').trim();
-    let date = adress_date.match(/\d+/g);
-    let type = (text[2].replace(/[^A-Za-zÀ-ỹ\s\d\/\-\:]/g, '')).trim();
-    let content = (text[3].replace(/[^A-Za-zÀ-ỹ\s\d\/\-\:]/g, '')).trim();
+    if (text[1]) {
+        let line2 = text[1].split("   ");
+        number = (line2[0].replace(/[^A-Za-zÀ-ỹ\s\d\/\-]/g, '')).trim();
+
+        let adress_date = line2[line2.length - 1];
+        let postionAdress = adress_date.search("ngày");
+        adress = (adress_date.slice(0, postionAdress)).replace(/[^A-Za-zÀ-ỹ\s]/g, '').trim();
+        date = adress_date.match(/\d+/g);
+    }
+
+    let type = "";
+    if (text[2]) {
+        type = (text[2].replace(/[^A-Za-zÀ-ỹ\s\d\/\-\:]/g, '')).trim();
+    }
+
+    let content = "";
+    if (text[3]) {
+        content = (text[3].replace(/[^A-Za-zÀ-ỹ\s\d\/\-\:]/g, '')).trim();
+    }
+
+    if(!date ||date.length !=3) {
+        date="";
+    }
+    else{
+        date=`${date[0]}/${date[1] }/${date[2]}`;
+    }
+
     return {
         name,
         number,
         adress,
-        date: `${date[0]}/${date[1]}/${date[2]}`,
+        date: date,
         type,
         content
     }
@@ -131,7 +156,7 @@ const convertImagetoText = async (image) => {
     return textObject;
 }
 //count is number page pdf
-const convertPDFtoText = async(count) => {
+const convertPDFtoText = async (count) => {
     const numThreads = Math.min(count, os.cpus().length);
     const chunkSize = Math.ceil(count / numThreads);
     const ocrPromises = [];
@@ -162,4 +187,4 @@ const convertPDFtoText = async(count) => {
     return texts;
 }
 
-module.exports = { convertImagetoText, getInfomation, convertPDFtoText}
+module.exports = { convertImagetoText, getInfomation, convertPDFtoText }

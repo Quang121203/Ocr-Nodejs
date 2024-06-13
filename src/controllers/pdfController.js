@@ -1,5 +1,6 @@
 const PDFService = require('../services/pdfService');
 const { readPDF } = require('../services/fileService');
+const path = require('path');
 
 const findPDF = async (req, res) => {
     const result = await PDFService.findPDF(req.params.keyword);
@@ -35,4 +36,25 @@ const viewPDF = async (req, res) => {
     res.status(200).send(buffer);
 }
 
-module.exports = { findPDF, viewPDF }
+
+const insertPDF = async (req, res) => {
+    try {
+
+        const filePath = path.join(__dirname, `../../public/ocr_files/${req.body.file}`)
+        await PDFService.insertPDF({...req.body,file:filePath});
+        const buffer = await readPDF(filePath);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.status(200).send(buffer);
+
+
+    } catch (err) {
+        console.log(err);
+        return res.status(404).json({
+            EC: 1,
+            EM: err,
+            DT: ""
+        })
+    }
+}
+
+module.exports = { findPDF, viewPDF, insertPDF }
