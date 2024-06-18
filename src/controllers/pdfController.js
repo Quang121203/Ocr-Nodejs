@@ -1,6 +1,6 @@
 const PDFService = require('../services/pdfService');
-const { readPDF } = require('../services/fileService');
-const path = require('path');
+const { getAllPages } = require('../services/pageService');
+const { PDFDocument } = require('pdf-lib');
 
 const findPDF = async (req, res) => {
     const result = await PDFService.findPDF(req.params.keyword);
@@ -31,30 +31,27 @@ const viewPDF = async (req, res) => {
         })
     }
 
-    const buffer = await readPDF(result.file);
+    const pages = await getAllPages(req.body.id);
+    pages.sort(function (a, b) {
+        return a.name - b.name;
+    });
+
+    const mergedPdf = await PDFDocument.create();
+
+    for (const page of pages) {
+        const pdfDoc = await PDFDocument.load(page.file);
+        const [copiedPage] = await mergedPdf.copyPages(pdfDoc, [0]);
+        mergedPdf.addPage(copiedPage);
+    }
+
+    const pdf = await mergedPdf.save();
+    
+    const buffer = Buffer.from(pdf);
+
     res.setHeader('Content-Type', 'application/pdf');
     res.status(200).send(buffer);
+
 }
 
 
-const insertPDF = async (req, res) => {
-    try {
-
-        const filePath = path.join(__dirname, `../../public/ocr_files/${req.body.file}`)
-        await PDFService.insertPDF({...req.body,file:filePath});
-        const buffer = await readPDF(filePath);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.status(200).send(buffer);
-
-
-    } catch (err) {
-        console.log(err);
-        return res.status(404).json({
-            EC: 1,
-            EM: err,
-            DT: ""
-        })
-    }
-}
-
-module.exports = { findPDF, viewPDF, insertPDF }
+module.exports = { findPDF, viewPDF }

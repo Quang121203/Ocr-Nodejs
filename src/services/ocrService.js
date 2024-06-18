@@ -2,6 +2,8 @@ const { createWorker } = require('tesseract.js');
 const path = require('path');
 const { Worker } = require('worker_threads');
 const os = require('os');
+const { remove, convertPDFtoImage, createPDF, splitPDF } = require('../services/fileService');
+const { promises: fs } = require("node:fs");
 
 const handleText = (text) => {
     let name = "";
@@ -34,11 +36,11 @@ const handleText = (text) => {
         content = (text[3].replace(/[^A-Za-zÀ-ỹ\s\d\/\-\:]/g, '')).trim();
     }
 
-    if(!date ||date.length !=3) {
-        date="";
+    if (!date || date.length != 3) {
+        date = "";
     }
-    else{
-        date=`${date[0]}/${date[1] }/${date[2]}`;
+    else {
+        date = `${date[0]}/${date[1]}/${date[2]}`;
     }
 
     return {
@@ -51,18 +53,23 @@ const handleText = (text) => {
     }
 }
 
-const getInfomation = async () => {
+const createWorkerInstance = async (image) => {
     const worker = await createWorker('vie', 1);
-
     await worker.setParameters({
         preserve_interword_spaces: '1',
     });
 
-    const ret = await worker.recognize(path.join(__dirname, `../../public/images/page0.png`));
+    const ret = await worker.recognize(path.join(__dirname, `../../public/images/page${image}.png`));
 
     const blocks = ret.data.blocks.sort((a, b) => a.bbox.y - b.bbox.y);
-    let text = [];
+    await worker.terminate();
+    return blocks;
+};
 
+const getInfomation = async () => {
+    const blocks = await createWorkerInstance(0);
+    let text = [];
+    let baseline = [];
     blocks.forEach(block => {
         const paragraph = block.paragraphs[0];
         const lines = paragraph.lines;
@@ -80,6 +87,8 @@ const getInfomation = async () => {
                 || lineText.toLowerCase().includes("tháng")
                 || lineText.toLowerCase().includes("năm"))) {
                 text.push(lineText);
+                baseline = lines[i].baseline;
+
                 text.push(lines[i + 1].text);
                 text.push(lines[i + 2].text);
                 foundDate = true;
@@ -88,52 +97,11 @@ const getInfomation = async () => {
         }
     });
 
-
-    // blocks.forEach(block => {
-    //     const paragraph = block.paragraphs[0];
-    //     const lines = paragraph.lines;
-    //     let check = false;
-    //     for (var i = 0; i < lines.length; i++) {
-
-    //         if ((lines[i].text.includes("CỘNG")
-    //             || lines[i].text.includes("HÒA")
-    //             || lines[i].text.includes("XÃ")
-    //             || lines[i].text.includes("HỘI")
-    //             || lines[i].text.includes("CHỦ")
-    //             || lines[i].text.includes("NGHĨA")
-    //             || lines[i].text.includes("VIỆT")
-    //             || lines[i].text.includes("NAM")) && !check
-    //         ) {
-    //             text.push(lines[i].text);
-    //             check = true;
-    //         }
-    //         else if (lines[i].text.toLowerCase().includes("ngày")
-    //             || lines[i].text.toLowerCase().includes("tháng")
-    //             || lines[i].text.toLowerCase().includes("năm")
-    //         ) {
-    //             text.push(lines[i].text);
-    //             text.push(lines[i + 1].text);
-    //             text.push(lines[i + 2].text);
-    //             return;
-    //         }
-    //     }
-
-    // });
-
-    await worker.terminate();
-    return handleText(text);
+    return ({ text: handleText(text), baseline });
 }
 
 const convertImagetoText = async (image) => {
-    const worker = await createWorker('vie', 1);
-
-    await worker.setParameters({
-        preserve_interword_spaces: '1',
-    });
-
-    const ret = await worker.recognize(path.join(__dirname, `../../public/images/page${image}.png`));
-
-    const blocks = ret.data.blocks.sort((a, b) => a.bbox.y - b.bbox.y);
+    const blocks = await createWorkerInstance(image);
     let textObject = [];
 
     blocks.forEach(block => {
@@ -152,7 +120,6 @@ const convertImagetoText = async (image) => {
         });
     });
 
-    await worker.terminate();
     return textObject;
 }
 //count is number page pdf
@@ -187,4 +154,38 @@ const convertPDFtoText = async (count) => {
     return texts;
 }
 
-module.exports = { convertImagetoText, getInfomation, convertPDFtoText }
+const ocr = async (file, string=null) => {
+    let count = 0;
+    try {
+
+        count = await convertPDFtoImage(file);
+        //ocr pdf=====================================================================
+        const texts = await convertPDFtoText(count);
+        //ocr info===================================================================
+        const { text, baseline } = await getInfomation();
+
+        let pdf;
+        // create pdf=============================================================
+        if (string) {
+            string = { string, baseline };
+            pdf = await createPDF(texts, file, string)
+        }
+        else {
+            pdf = await createPDF(texts, file);
+        }
+
+        const arrayBuffer = await pdf.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        await fs.writeFile(path.join(__dirname, `../../public/ocr_files/${file}`), buffer);
+        await splitPDF(file);
+
+        return { buffer, text: text, count };
+    }
+    catch (error) {
+        console.error(error);
+        remove(file, count);
+    }
+}
+
+module.exports = { convertImagetoText, getInfomation, convertPDFtoText, ocr }

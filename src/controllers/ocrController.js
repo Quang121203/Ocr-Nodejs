@@ -1,63 +1,46 @@
-const { removeFile, convertPDFtoImage, createPDF, savePDF } = require('../services/fileService');
-const { getInfomation, convertPDFtoText } = require('../services/ocrService')
+const { remove } = require('../services/fileService');
+const { ocr } = require('../services/ocrService')
 const { insertPDF } = require('../services/pdfService');
-
-
-// const ocr = async(file) => {
-//     let count = 0;
-
-//     count = await convertPDFtoImage(file);
-
-//     //ocr pdf=====================================================================
-//     const texts = await convertPDFtoText(count);
-
-//     // create pdf=============================================================
-//     const pdf = await createPDF(texts, req.file);
-
-//     const arrayBuffer = await pdf.arrayBuffer();
-//     const buffer = Buffer.from(arrayBuffer);
-
-//     const filePath=await savePDF(buffer, req.file);
-//     return filePath;
-// }
+const { insertPagePDF } = require('../services/pageService');
 
 const ocrController = async (req, res) => {
-    let count = 0;
     try {
         req.file = req.body.name;
-        count = await convertPDFtoImage(req.file);
+        const { buffer, text, count } = await ocr(req.file);
 
-        //ocr info===================================================================
-        const textInfo = await getInfomation();
+        const PDF = await insertPDF({ ...text });
 
-        //ocr pdf=====================================================================
-        const texts = await convertPDFtoText(count);
+        await insertPagePDF(count, PDF.id);
+        remove(req.file, count);
 
-        // create pdf=============================================================
-        const pdf = await createPDF(texts, req.file);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.status(200).send(buffer);
+    } catch (error) {
+        console.error(error);
 
-        const arrayBuffer = await pdf.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        return res.status(200).json({
+            EC: 1,
+            EM: "Something went wrong in this PDF",
+            DT: ''
+        })
+    }
+}
 
-        const filePath = await savePDF(buffer, req.file);
+const ocrController2 = async (req, res) => {
+    try {
+        req.file = req.body.name;
+        const { buffer, count } = await ocr(req.file);
+
+        const PDF = await insertPDF({ ...req.body, name: req.body.pdfName });
+
+        await insertPagePDF(count, PDF.id);
 
         res.setHeader('Content-Type', 'application/pdf');
         res.status(200).send(buffer);
 
-        //remove file===============================================================
-        removeFile(req.file, "files");
-        for (let i = 0; i < count; i++) {
-            removeFile(`page${i}.png`, "images");
-        }
-
-        await insertPDF({ ...textInfo, file: filePath });
-
     } catch (error) {
         console.error(error);
-        removeFile(req.file, "files");
-        for (let i = 0; i < count; i++) {
-            removeFile(`page${i}.png`, "images");
-        }
+
         return res.status(200).json({
             EC: 1,
             EM: "Something went wrong in this PDF",
@@ -66,41 +49,21 @@ const ocrController = async (req, res) => {
     }
 }
 
-
-const ocrController2 = async (req, res) => {
-    let count = 0;
+const ocrController3 = async (req, res) => {
     try {
         req.file = req.body.name;
-        count = await convertPDFtoImage(req.file);
+        const { buffer, text, count } = await ocr(req.file,req.body.string);
 
-        //ocr pdf=====================================================================
-        const texts = await convertPDFtoText(count);
+        const PDF = await insertPDF({ ...text, number: req.body.number, adress: req.body.adress, date: req.body.date });
 
-        // create pdf=============================================================
-        const pdf = await createPDF(texts, req.file);
+        await insertPagePDF(count, PDF.id);
+        remove(req.file, count);
 
-        const arrayBuffer = await pdf.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        await savePDF(buffer, req.file);
-
-        res.status(200).json({
-            EC: 0,
-            EM: "",
-            DT: ''
-        })
-
-        removeFile(req.file, "files");
-        for (let i = 0; i < count; i++) {
-            removeFile(`page${i}.png`, "images");
-        }
-
+        res.setHeader('Content-Type', 'application/pdf');
+        res.status(200).send(buffer);
     } catch (error) {
         console.error(error);
-        removeFile(req.file, "files");
-        for (let i = 0; i < count; i++) {
-            removeFile(`page${i}.png`, "images");
-        }
+
         return res.status(200).json({
             EC: 1,
             EM: "Something went wrong in this PDF",
@@ -108,6 +71,4 @@ const ocrController2 = async (req, res) => {
         })
     }
 }
-
-
-module.exports = { ocrController, ocrController2 }
+module.exports = { ocrController, ocrController2, ocrController3 }

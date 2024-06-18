@@ -20,7 +20,6 @@ module.exports = (sequelize, DataTypes) => {
     date:DataTypes.STRING,
     type:DataTypes.STRING,
     content: DataTypes.STRING,
-    file: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'Pdf',
