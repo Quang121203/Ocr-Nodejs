@@ -28,32 +28,28 @@ export const CropperImage = ({ src, file }) => {
 
     const onClickInsert = async () => {
         setIsLoading(true);
+
+        let date = data[3].match(/\d+/g);
+        if (!date || date.length != 3) {
+            date = "0/0/0";
+        }
+        else {
+            date = `${date[0]}/${date[1]}/${date[2]}`;
+        }
+
         const form = new FormData();
-        const fileName = Date.now() + file.name;
-        form.append("name", fileName);
+        form.append("name", Date.now() + file.name);
         form.append("file", file);
 
-        await axios.post('ocr', form);
+        form.append("pdfName", data[0].trim());
+        form.append("number", data[1].replace(/[^A-Za-zÀ-ỹ\s\d\/\-]/g, '').trim());
+        form.append("adress", data[2].replace(/[^A-Za-zÀ-ỹ\s]/g, '').trim());
+        form.append("date",date);
+        form.append("type", data[4].trim());
+        form.append("content", data[5].trim());
+        
 
-        let date= data[3].match(/\d+/g);
-        if(!date ||date.length !=3) {
-            date="";
-        }
-        else{
-            date=`${date[0]}/${date[1] }/${date[2]}`;
-        }
-
-        const body = {
-            name: data[0].trim(),
-            number: data[1].replace(/[^A-Za-zÀ-ỹ\s\d\/\-]/g, '').trim(),
-            adress: data[2].replace(/[^A-Za-zÀ-ỹ\s]/g, '').trim(),
-            date: date,
-            type: data[4].trim(),
-            content: data[5].trim(),
-            file: fileName
-        }
-
-        const response = await axios.post("insert", body, {
+        const response = await axios.post('ocr', form, {
             responseType: 'blob'
         });
 

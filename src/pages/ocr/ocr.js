@@ -7,6 +7,10 @@ import axios from '../../config/axios';
 import convertPdfToImages from '../../services/fileServices';
 import CropperImage from '../../components/Cropper/cropper';
 
+import { getInfomation } from '../../services/ocrServices';
+
+// import axios from 'axios';
+
 const Ocr = () => {
   const [file, setFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,8 +31,6 @@ const Ocr = () => {
     }
 
   }
-
-
 
 
   const onClickOCR = async (e) => {
@@ -63,6 +65,103 @@ const Ocr = () => {
     setSrc(image);
   }
 
+  const onClickOCR3 = async (e) => {
+    if (!file) {
+      alert("Please import file");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const imageBase64 = await convertPdfToImages(file);
+      const image = new Image();
+      image.src = imageBase64;
+
+      image.onload = async () => {
+        const { x0, y0, x1, y1, space } = await getInfomation(image);
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = x1 - x0;
+        canvas.height = y1 - y0;
+
+        ctx.drawImage(image, x0 - 5, y0, x1 - x0 + 5, y1 - y0, 0, 0, x1 - x0, y1 - y0);
+
+        canvas.toBlob(async (blob) => {
+          const croppedFile = new File([blob], 'cropped-image.png', { type: 'image/png' });
+          const number = await handleUpload(croppedFile);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(image, x0 + 150, y0, x1 - x0 + 5, y1 - y0, 0, 0, x1 - x0, y1 - y0);
+
+          canvas.toBlob(async (blob) => {
+            const croppedFile = new File([blob], 'cropped-image.png', { type: 'image/png' });
+            const addressDate = await handleUpload(croppedFile);
+
+            let positionAddress = addressDate.search("ngày");
+            let address = (addressDate.slice(0, positionAddress)).replace(/[^A-Za-zÀ-ỹ\s]/g, '').trim();
+            let date = addressDate.match(/\d+/g);
+            if (!date || date.length !== 3) {
+              date = "0/0/0";
+            } else {
+              date = `${date[0]}/${date[1]}/${date[2]}`;
+            }
+
+            var s = '';
+            for (var i = 0; i < space; i++) {
+              s += " ";
+            }
+
+            const data = new FormData();
+            const fileName = Date.now() + file.name;
+            data.append("name", fileName);
+            data.append("file", file);
+
+            data.append("number", number);
+            data.append("adress", address);
+            data.append("date", date);
+            data.append("string", number + s + addressDate);
+
+            const response = await axios.post('ocr3', data, {
+              responseType: 'blob'
+            });
+
+            setIsLoading(false);
+
+            const blobResponse = new Blob([response], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blobResponse);
+            window.open(url, '_blank');
+
+          }, 'image/png');
+
+        }, 'image/png');
+      };
+
+    } catch (error) {
+      console.error('Error processing image:', error);
+      alert('Error processing image');
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpload = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await axios.post('http://localhost:5000/predict', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      return response.result;
+
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
+
 
   return (
     <div className='container d-flex my-4 align-items-center flex-column ocr'>
@@ -77,8 +176,9 @@ const Ocr = () => {
       {file ? (
         !isLoading ? (
           <div className='d-flex '>
-            <Button variant="primary col-6" onClick={() => onClickOCR()}>OCR</Button>
-            <Button variant="primary col-6 mx-2" onClick={() => onClickOCR2()}>OCR2</Button>
+            <Button variant="primary col-4" onClick={() => onClickOCR()}>OCR</Button>
+            <Button variant="primary col-4 mx-2" onClick={() => onClickOCR2()}>OCR2</Button>
+            <Button variant="primary col-4" onClick={() => onClickOCR3()}>OCR3</Button>
           </div>
 
         ) : (
@@ -88,8 +188,8 @@ const Ocr = () => {
         <Button variant="secondary col-6" onClick={() => alert("Please import file")}>OCR</Button>
       )}
 
-      {src && file&&
-        <CropperImage src={src} file={file}/>
+      {src && file &&
+        <CropperImage src={src} file={file} />
       }
 
     </div >
