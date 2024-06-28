@@ -1,8 +1,8 @@
 import React, { useState, createRef } from "react";
 import Cropper from "react-cropper";
 import "cropperjs/dist/cropper.css";
-import ocr from "../../services/ocrServices";
 import axios from '../../config/axios';
+import ocr, { handleUpload } from "../../services/ocrServices";
 
 export const CropperImage = ({ src, file }) => {
     const [cropData, setCropData] = useState(null);
@@ -17,10 +17,22 @@ export const CropperImage = ({ src, file }) => {
 
     const getCropData = async () => {
         if (typeof cropperRef.current?.cropper !== "undefined") {
-            const src = cropperRef.current?.cropper.getCroppedCanvas().toDataURL();
+            const src = cropperRef.current?.cropper.getCroppedCanvas().toDataURL('image/png');
+
+            const response = await fetch(src);
+            const blob = await response.blob();
+            let text;
+            if(cropCount==1 || cropCount==2 || cropCount==3){
+                text = await handleUpload(blob);
+            }
+            else{
+                text = await ocr(src);
+            }
+            
+            console.log(text);
             setCropData(src);
             setCropCount(cropCount + 1);
-            const text = await ocr(src);
+            
             setData([...data, text]);
 
         }
@@ -30,7 +42,7 @@ export const CropperImage = ({ src, file }) => {
         setIsLoading(true);
 
         let date = data[3].match(/\d+/g);
-        if (!date || date.length != 3) {
+        if (!date || date.length !== 3) {
             date = "0/0/0";
         }
         else {
@@ -44,10 +56,10 @@ export const CropperImage = ({ src, file }) => {
         form.append("pdfName", data[0].trim());
         form.append("number", data[1].replace(/[^A-Za-zÀ-ỹ\s\d\/\-]/g, '').trim());
         form.append("adress", data[2].replace(/[^A-Za-zÀ-ỹ\s]/g, '').trim());
-        form.append("date",date);
+        form.append("date", date);
         form.append("type", data[4].trim());
         form.append("content", data[5].trim());
-        
+
 
         const response = await axios.post('ocr', form, {
             responseType: 'blob'

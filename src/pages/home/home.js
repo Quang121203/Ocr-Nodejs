@@ -22,6 +22,7 @@ const Home = () => {
     const findPDF = async () => {
         debouncedValue = debouncedValue.replace(/[^A-Za-zÀ-ỹ\s\d]/g, '').trim()
         if (debouncedValue) {
+            debouncedValue = decodeURIComponent(debouncedValue);
             const res = await axios.get(`pdf/${debouncedValue}`);
             if (res && res.DT) {
                 setData(res.DT);

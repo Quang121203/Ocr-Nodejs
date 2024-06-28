@@ -7,9 +7,7 @@ import axios from '../../config/axios';
 import convertPdfToImages from '../../services/fileServices';
 import CropperImage from '../../components/Cropper/cropper';
 
-import { getInfomation } from '../../services/ocrServices';
-
-// import axios from 'axios';
+import { getInfomation, handleUpload } from '../../services/ocrServices';
 
 const Ocr = () => {
   const [file, setFile] = useState(null);
@@ -86,7 +84,7 @@ const Ocr = () => {
         canvas.width = x1 - x0;
         canvas.height = y1 - y0;
 
-        ctx.drawImage(image, x0 - 5, y0, x1 - x0 + 5, y1 - y0, 0, 0, x1 - x0, y1 - y0);
+        ctx.drawImage(image, x0, y0, x1 - x0 - 150, y1 - y0, 0, 0, x1 - x0, y1 - y0);
 
         canvas.toBlob(async (blob) => {
           const croppedFile = new File([blob], 'cropped-image.png', { type: 'image/png' });
@@ -101,11 +99,7 @@ const Ocr = () => {
             let positionAddress = addressDate.search("ngày");
             let address = (addressDate.slice(0, positionAddress)).replace(/[^A-Za-zÀ-ỹ\s]/g, '').trim();
             let date = addressDate.match(/\d+/g);
-            if (!date || date.length !== 3) {
-              date = "0/0/0";
-            } else {
-              date = `${date[0]}/${date[1]}/${date[2]}`;
-            }
+            date = date && date.length === 3 ? `${date[0]}/${date[1]}/${date[2]}` : '0/0/0';
 
             var s = '';
             for (var i = 0; i < space; i++) {
@@ -144,23 +138,7 @@ const Ocr = () => {
     }
   };
 
-  const handleUpload = async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
 
-      const response = await axios.post('http://localhost:5000/predict', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      return response.result;
-
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    }
-  };
 
 
   return (

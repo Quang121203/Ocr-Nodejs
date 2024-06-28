@@ -2,8 +2,8 @@ import axios from "../../config/axios";
 
 const Table = ({ data }) => {
 
-    const onClickView = async (id) => {
-        const response = await axios.post('/pdf', { id }, {
+    const onClickView = async (fileName) => {
+        const response = await axios.post('/pdf', { fileName }, {
             responseType: 'blob'
         });
         const blob = new Blob([response], { type: 'application/pdf' });
@@ -41,7 +41,7 @@ const Table = ({ data }) => {
                                                 <td className="text-right">{pdf.content}</td>
                                                 <td className="text-right">
                                                     <button className="btn btn-sm btn-primary col-12"
-                                                        onClick={() => onClickView(pdf.id)}>VIEW
+                                                        onClick={() => onClickView(pdf.fileName)}>VIEW
                                                     </button>
                                                 </td>
                                             </tr>

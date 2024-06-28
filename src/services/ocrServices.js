@@ -1,4 +1,5 @@
 import { createWorker } from 'tesseract.js';
+import axios from '../config/axios.js';
 
 const createWorkerInstance = async () => {
     const worker = await createWorker('vie', 1);
@@ -44,9 +45,25 @@ const getInfomation = async (image) => {
     return { ...text.bbox, space };
 };
 
+const handleUpload = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
 
+      const response = await axios.post('http://localhost:5000/predict', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      return response.result;
+
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
 
 
 export default ocr
 
-export { getInfomation }
+export { getInfomation,handleUpload }
