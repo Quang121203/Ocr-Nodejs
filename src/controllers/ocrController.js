@@ -1,74 +1,69 @@
 const { remove } = require('../services/fileService');
 const { ocr } = require('../services/ocrService')
 const { insertPDF } = require('../services/pdfService');
-const { insertPagePDF } = require('../services/pageService');
+// const { insertPagePDF } = require('../services/pageService');
+const { uploadFile } = require('../config/minioConfig');
+
+const handleError = (res, error) => {
+    console.error(error);
+    return res.status(200).json({
+        EC: 1,
+        EM: "Something went wrong in this PDF",
+        DT: ''
+    })
+};
+
+const handleSuccess = async (req,res, count,buffer) => {
+    await uploadFile(req.file)
+    remove(req.file, count);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.status(200).send(buffer);
+};
 
 const ocrController = async (req, res) => {
     try {
         req.file = req.body.name;
-        const { buffer, text, count } = await ocr(req.file);
 
-        const PDF = await insertPDF({ ...text });
+        //text: infomation
+        //texts: fullText
+        const { buffer, text, count, texts } = await ocr(req.file);
 
-        await insertPagePDF(count, PDF.id);
-        remove(req.file, count);
+        await insertPDF({ ...text, text: texts, fileName: req.file });
 
-        res.setHeader('Content-Type', 'application/pdf');
-        res.status(200).send(buffer);
+        // await insertPagePDF(count, PDF.id);
+        await handleSuccess(req,res,count,buffer);
     } catch (error) {
-        console.error(error);
-
-        return res.status(200).json({
-            EC: 1,
-            EM: "Something went wrong in this PDF",
-            DT: ''
-        })
+        return handleError(res, error);
     }
 }
 
 const ocrController2 = async (req, res) => {
     try {
         req.file = req.body.name;
-        const { buffer, count } = await ocr(req.file);
+        const { buffer, count, texts } = await ocr(req.file);
 
-        const PDF = await insertPDF({ ...req.body, name: req.body.pdfName });
+        await insertPDF({ ...req.body, name: req.body.pdfName, text: texts, fileName: req.file });
 
-        await insertPagePDF(count, PDF.id);
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.status(200).send(buffer);
-
+        // await insertPagePDF(count, PDF.id);
+        await handleSuccess(req,res,count,buffer);
     } catch (error) {
-        console.error(error);
-
-        return res.status(200).json({
-            EC: 1,
-            EM: "Something went wrong in this PDF",
-            DT: ''
-        })
+        return handleError(res, error);
     }
 }
 
 const ocrController3 = async (req, res) => {
     try {
         req.file = req.body.name;
-        const { buffer, text, count } = await ocr(req.file,req.body.string);
+        const { buffer, text, count, texts } = await ocr(req.file, req.body.string);
 
-        const PDF = await insertPDF({ ...text, number: req.body.number, adress: req.body.adress, date: req.body.date });
+        await insertPDF({ ...text, ...req.body, text: texts, name: text.name, fileName: req.file });
 
-        await insertPagePDF(count, PDF.id);
-        remove(req.file, count);
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.status(200).send(buffer);
+        // await insertPagePDF(count, PDF.id);
+        await handleSuccess(req,res,count,buffer);
     } catch (error) {
-        console.error(error);
-
-        return res.status(200).json({
-            EC: 1,
-            EM: "Something went wrong in this PDF",
-            DT: ''
-        })
+        return handleError(res, error);
     }
 }
+
 module.exports = { ocrController, ocrController2, ocrController3 }

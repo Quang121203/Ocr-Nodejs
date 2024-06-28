@@ -27,6 +27,12 @@ module.exports = {
       content: {
         type: Sequelize.STRING
       },
+      text: {
+        type: Sequelize.TEXT('long')
+      },
+      fileName:{
+        type: Sequelize.STRING
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
@@ -36,6 +42,13 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
+
+    await queryInterface.addIndex('Pdf', {
+      fields: ['text'],
+      type: 'FULLTEXT',
+      name: 'text_idx'
+    });
+    
   },
   async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('Pdf');

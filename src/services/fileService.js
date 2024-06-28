@@ -16,7 +16,7 @@ const remove = (file, count) => {
   removeFile(file, "ocr_files");
   for (let i = 0; i < count; i++) {
     removeFile(`page${i}.png`, "images");
-    removeFile(`page${i}.pdf`, "pages");
+    // removeFile(`page${i}.pdf`, "pages");
   }
 }
 

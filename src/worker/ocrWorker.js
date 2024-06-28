@@ -5,7 +5,7 @@ const { start, end } = workerData;
 
 const promises = [];
 for (let i = start; i < end; i++) {
-    promises.push(convertImagetoText(i).then(text => ({ page: i, text })));
+    promises.push(convertImagetoText(i).then(({ textObject, texts }) => ({ page: i, text: textObject, texts })));
 }
 
 Promise.all(promises)

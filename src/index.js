@@ -3,6 +3,7 @@ const app = express()
 const router = require('./router')
 const cors = require('cors')
 const bodyParser = require('body-parser')
+const { createBuket } = require('./config/minioConfig');
 
 //get number cpus==============================================
 // const os = require('os');
@@ -20,6 +21,9 @@ app.use(cors())
 //config req.body =================================================
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+//config minio
+createBuket();
 
 //config router =================================================
 app.use('/', router)

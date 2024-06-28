@@ -20,9 +20,18 @@ module.exports = (sequelize, DataTypes) => {
     date:DataTypes.STRING,
     type:DataTypes.STRING,
     content: DataTypes.STRING,
+    fileName: DataTypes.STRING,
+    text: DataTypes.TEXT('long')
   }, {
     sequelize,
     modelName: 'Pdf',
+    indexes: [
+      {
+        type: 'FULLTEXT',
+        name: 'text_idx',
+        fields: ['text']
+      }
+    ]
   });
   return Pdf;
 };

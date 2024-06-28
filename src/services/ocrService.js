@@ -103,8 +103,9 @@ const getInfomation = async () => {
 const convertImagetoText = async (image) => {
     const blocks = await createWorkerInstance(image);
     let textObject = [];
-
+    let texts = "";
     blocks.forEach(block => {
+        texts += " " + block.page.text;
         const paragraphs = block.paragraphs;
         paragraphs.forEach(paragraph => {
             const lines = paragraph.lines;
@@ -120,7 +121,7 @@ const convertImagetoText = async (image) => {
         });
     });
 
-    return textObject;
+    return {textObject,texts};
 }
 //count is number page pdf
 const convertPDFtoText = async (count) => {
@@ -154,7 +155,7 @@ const convertPDFtoText = async (count) => {
     return texts;
 }
 
-const ocr = async (file, string=null) => {
+const ocr = async (file, string = null) => {
     let count = 0;
     try {
 
@@ -178,9 +179,14 @@ const ocr = async (file, string=null) => {
         const buffer = Buffer.from(arrayBuffer);
 
         await fs.writeFile(path.join(__dirname, `../../public/ocr_files/${file}`), buffer);
-        await splitPDF(file);
+        //await splitPDF(file);
+       
+        let fullText = "";
+        texts.forEach(text => {
+            fullText += " " + text.texts;
+        });
 
-        return { buffer, text: text, count };
+        return { buffer, text: text, count, texts: fullText };
     }
     catch (error) {
         console.error(error);
