@@ -22,17 +22,17 @@ export const CropperImage = ({ src, file }) => {
             const response = await fetch(src);
             const blob = await response.blob();
             let text;
-            if(cropCount==1 || cropCount==2 || cropCount==3){
+            if (cropCount === 1 || cropCount === 2 || cropCount === 3) {
                 text = await handleUpload(blob);
             }
-            else{
+            else {
                 text = await ocr(src);
             }
-            
+
             console.log(text);
             setCropData(src);
             setCropCount(cropCount + 1);
-            
+
             setData([...data, text]);
 
         }
@@ -61,7 +61,7 @@ export const CropperImage = ({ src, file }) => {
         form.append("content", data[5].trim());
 
 
-        const response = await axios.post('ocr', form, {
+        const response = await axios.post('ocr2', form, {
             responseType: 'blob'
         });
 
@@ -118,10 +118,11 @@ export const CropperImage = ({ src, file }) => {
                         autoCropArea={1}
                         checkOrientation={false}
                         guides={true}
+                        
                     />
                 </div>
 
-                <img style={{ width: "100%" }} src={cropData} />
+                <img style={{ width: "100%" }} src={cropData} alt="img"/>
             </div>
 
         </div>

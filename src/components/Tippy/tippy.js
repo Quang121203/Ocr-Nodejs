@@ -1,9 +1,9 @@
 import axios from "../../config/axios";
 
-const Table = ({ data }) => {
+const Tippy = ({ data }) => {
 
     const onClickView = async (fileName) => {
-        const response = await axios.post('/pdf', { fileName }, {
+        const response = await axios.get(`viewpdf/${fileName}`,{
             responseType: 'blob'
         });
         const blob = new Blob([response], { type: 'application/pdf' });
@@ -61,4 +61,4 @@ const Table = ({ data }) => {
     )
 }
 
-export default Table;
+export default Tippy;

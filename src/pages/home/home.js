@@ -3,15 +3,14 @@ import React, { useEffect, useState } from 'react';
 import Tippy from '@tippyjs/react/headless';
 import axios from "../../config/axios";
 import useDebounce from '../../hooks/useDebounce';
-import { useNavigate } from "react-router-dom";
-import Table from '../../components/Table/table';
+import TippyReact from '../../components/Tippy/tippy';
+import Logout from '../../components/Logout/logout';
 
 const Home = () => {
     const [showTippy, setShowTippy] = useState(false);
     const [keyword, setKeyword] = useState("");
 
     const [data, setData] = useState(null);
-    const navigate = useNavigate();
 
     let debouncedValue = useDebounce(keyword, 500);
 
@@ -23,7 +22,7 @@ const Home = () => {
         debouncedValue = debouncedValue.replace(/[^A-Za-zÀ-ỹ\s\d]/g, '').trim()
         if (debouncedValue) {
             debouncedValue = decodeURIComponent(debouncedValue);
-            const res = await axios.get(`pdf/${debouncedValue}`);
+            const res = await axios.post(`findpdf`,{keyword:debouncedValue});
             if (res && res.DT) {
                 setData(res.DT);
             }
@@ -44,17 +43,14 @@ const Home = () => {
 
     return (
         <div>
-            <button className="btn btn-primary col-1 position-absolute top-0 end-0 mx-3 my-3" onClick={() => navigate("/login")}>
-                Login
-            </button>
-
+            <Logout />
             <Tippy
                 interactive={true}
                 visible={showTippy}
                 placement="bottom"
                 render={attrs => (
                     <div className="box" tabIndex="-1" {...attrs}>
-                        <Table data={data} />
+                        <TippyReact data={data} />
                     </div>
                 )}
                 onClickOutside={() => setShowTippy(false)}

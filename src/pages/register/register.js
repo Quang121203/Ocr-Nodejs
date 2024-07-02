@@ -1,35 +1,38 @@
-import './login.css'
+import './register.css'
 import { useRef } from 'react';
+import { useNavigate } from "react-router-dom";
 import axios from '../../config/axios';
 import { toast } from 'react-toastify';
 
-import {useDispatch } from 'react-redux';
-import { login } from '../../redux/userSlice';
-
-const Login = () => {
+const Register = () => {
     const usernameInputRef = useRef();
     const passwordInputRef = useRef();
+    const re_passwordInputRef = useRef();
 
-    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-    const onClickLogin = async () => {
+    const onClickRegister = async () => {
         const username = usernameInputRef.current.value.trim();
         const password = passwordInputRef.current.value.trim();
-        if (username === "" || password === "") {
+        const re_password = re_passwordInputRef.current.value.trim();
+        if (username === "" || password === "" || re_password === "") {
             alert("Please enter full information");
         }
+        else if (password !== re_password) {
+            alert("Passwords must be same");
+        }
         else {
-            const res = await axios.post('login', { username, password });
+            const res = await axios.post('register', { username, password });
             if (res) {
                 if (+res.EC === 1) toast.error(res.EM);
                 else {
                     toast.success(res.EM);
-                    dispatch(login({username:res.DT.user.username,isAdmin:res.DT.user.isAdmin}));
+                    navigate("/login");
                 }
             }
         }
-    }
 
+    }
     return (
         <section className="vh-100">
             <div className="container-fluid h-custom">
@@ -55,12 +58,18 @@ const Login = () => {
                                 <label className="form-label" htmlFor="form3Example4">Password</label>
                             </div>
 
+                            <div data-mdb-input-init className="form-outline mb-3">
+                                <input type="password" id="form3Example4" className="form-control form-control-lg"
+                                    placeholder="Enter re-password" ref={re_passwordInputRef} />
+                                <label className="form-label" htmlFor="form3Example4">Re-Password</label>
+                            </div>
+
                             <div className="text-center text-lg-start mt-4 pt-2">
-                                <button type="button" className="btn btn-primary btn-lg px-5" onClick={() => onClickLogin()}>
-                                    Login
+                                <button type="button" className="btn btn-primary btn-lg px-5" onClick={() => onClickRegister()}>
+                                    Register
                                 </button>
-                                <p className="small fw-bold mt-2 pt-1 mb-0">Don't have an account? <a href="/register"
-                                    className="link-danger">Register</a></p>
+                                <p class="small fw-bold mt-2 pt-1 mb-0">Login<a href="/login"
+                                    class="link-danger mx-2">here</a></p>
                             </div>
 
                         </form>
@@ -79,5 +88,5 @@ const Login = () => {
     );
 }
 
-export default Login;
+export default Register;
 

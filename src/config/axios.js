@@ -4,7 +4,7 @@ const instance = axios.create({
     baseURL: 'http://localhost:8080/'
 });
 
-
+instance.defaults.withCredentials = true;
 // Add a response interceptor
 instance.interceptors.response.use(function (response) {
     return response.data;

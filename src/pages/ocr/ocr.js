@@ -6,7 +6,6 @@ import { useState } from 'react';
 import axios from '../../config/axios';
 import convertPdfToImages from '../../services/fileServices';
 import CropperImage from '../../components/Cropper/cropper';
-
 import { getInfomation, handleUpload } from '../../services/ocrServices';
 
 const Ocr = () => {
@@ -30,7 +29,6 @@ const Ocr = () => {
 
   }
 
-
   const onClickOCR = async (e) => {
     if (!file) {
       alert("Please import file")
@@ -43,7 +41,7 @@ const Ocr = () => {
     data.append("name", fileName);
     data.append("file", file);
 
-    const response = await axios.post('upload', data, {
+    const response = await axios.post('ocr', data, {
       responseType: 'blob'
     });
     setIsLoading(false);
@@ -52,7 +50,6 @@ const Ocr = () => {
     window.open(url, '_blank');
 
   }
-
 
   const onClickOCR2 = async (e) => {
     if (!file) {
@@ -138,12 +135,9 @@ const Ocr = () => {
     }
   };
 
-
-
-
   return (
     <div className='container d-flex my-4 align-items-center flex-column ocr'>
-      <InputGroup className="mb-3">
+      <InputGroup className="my-3">
         <Form.Control
           placeholder="File"
           type="file"

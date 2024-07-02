@@ -61,7 +61,7 @@ const handleUpload = async (file) => {
     } catch (error) {
       console.error('Error uploading file:', error);
     }
-  };
+};
 
 
 export default ocr
